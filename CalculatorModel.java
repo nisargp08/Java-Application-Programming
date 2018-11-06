@@ -18,18 +18,18 @@ public class CalculatorModel {
 	public static final int FIRSTOPERAND= 1;
 	/** {@value} : constant value of secondoperand*/
 	public static final int SECONDOPERAND= 2;
-	/** {@value} : constant value of secondoperand*/
-	public static final int INTEGER = 3;
 	/** {@value} : constatnt value of state after calculation of firstOperand and secondOperand */
-	public static final int FINALVAL = 4;
+	public static final int FINALVAL = 3;
 	/** {@value} : constant value for single precision calculations : .0 */
-	public static final int SINGLEPRECISION = 5;
+	public static final int SINGLEPRECISION = 4;
 	/** {@value} : constant value for single precision calculations : .00 */
-	public static final int DOUBLEPRECISION = 6;
+	public static final int DOUBLEPRECISION = 5;
 	/** {@value} : constant value for Scientific calculations*/
-	public static final int SCICALCULATION = 7;
+	public static final int SCICALCULATION = 6;
 	/** {@value}* : constant for integer mode*/
-	public static final int INT = 8;
+	public static final int INT = 7;
+	/** {@value}* : constant for float mode*/
+	public static final int FLOAT = 8;
 	/**
 	 *  Default constructor for the model class
 	 * @return 
@@ -39,8 +39,9 @@ public class CalculatorModel {
 		secondOperand = null;
 		operation = null;
 		errorState = false;
-		precisionMode = SINGLEPRECISION;
+		precisionMode = DOUBLEPRECISION;
 		currentState = FIRSTOPERAND;
+		mode = FLOAT;
 	}
 	/** To clear the value in the text field display1
 	 */
@@ -127,7 +128,7 @@ public class CalculatorModel {
 	 * @return
 	 */
 	private String calculate() {
-		if(mode == INTEGER) {
+		if(mode == INT) {
 			int intOperand1 = 0;
 			int intOperand2 = 0;
 			try {
@@ -186,7 +187,7 @@ public class CalculatorModel {
 				return null;
 			}
 			/* When user divides any number with zero */
-			if(flOperand1 == 0 && operation == "/") {
+			if(flOperand2 == 0 && operation == "/") {
 				errMsg = "Cannot divide by zero";
 				/* Clearing all the fields and changing the errorstate to true*/
 				errorState = true;
@@ -272,5 +273,19 @@ public class CalculatorModel {
 	 */
 	public boolean integerMode() {
 		return mode == INT;
+	}
+	/**
+	 * Returning error message string
+	 * @return errMsg : String containing error message
+	 */
+	public String getErrMsg() {
+		return errMsg;
+	}
+	/**
+	 * This function will set the errMsg to null.Will be used after errMsg has been displayed on the screen and will be used to 
+	 * clear the msg.
+	 */
+	public void cleanErrMsg() {
+		errMsg = null;
 	}
 }/* Class ends*/
