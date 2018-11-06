@@ -13,6 +13,7 @@
  */
 
 package calculator;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -58,11 +59,13 @@ public class CalculatorViewController extends JPanel {
 
 	CalculatorViewController() {
 		/* INITIAL DECLARATION */
+		/* Calculator Model Class object */
+		CalculatorModel cmObj = new CalculatorModel();
 		/*
 		 * This object will be used to set the actionCommand when the any button is
 		 * clicked
 		 */
-		Controller controlObj = new Controller();
+		Controller controlObj = new Controller(cmObj);
 		/*
 		 * topPanel represents the top part of the calculator which consists of
 		 * following components Error label,Display textfield,Backspace Button,Checkbox
@@ -269,7 +272,7 @@ public class CalculatorViewController extends JPanel {
 			 * then adding it to the panel
 			 */
 			if (keyPad[i] == ".") {
-				dotButton = createButton(keyPad[i], keyPad[i], Color.BLACK, Color.BLUE, new Controller());
+				dotButton = createButton(keyPad[i], keyPad[i], Color.BLACK, Color.BLUE, controlObj);
 				dotButton.addActionListener(controlObj);
 				keypadPanel.add(dotButton);
 
@@ -279,7 +282,7 @@ public class CalculatorViewController extends JPanel {
 			 * added to the panel
 			 */
 			else if (keyPad[i] == "/" || keyPad[i] == "*" || keyPad[i] == "-" || keyPad[i] == "+") {
-				tempButton = createButton(keyPad[i], keyPad[i], Color.BLACK, Color.CYAN, new Controller());
+				tempButton = createButton(keyPad[i], keyPad[i], Color.BLACK, Color.CYAN, controlObj);
 				tempButton.addActionListener(controlObj);
 				keypadPanel.add(tempButton);
 			}
@@ -288,14 +291,14 @@ public class CalculatorViewController extends JPanel {
 			 * panel
 			 */
 			else if (keyPad[i] == "\u00B1") {
-				tempButton = createButton(keyPad[i], keyPad[i], Color.BLACK, Color.PINK, new Controller());
+				tempButton = createButton(keyPad[i], keyPad[i], Color.BLACK, Color.PINK, controlObj);
 				tempButton.addActionListener(controlObj);
 				keypadPanel.add(tempButton);
 
 			}
 			/* Else when it is a number button (1,2,3...etc) */
 			else {
-				tempButton = createButton(keyPad[i], keyPad[i], Color.BLACK, Color.BLUE, new Controller());
+				tempButton = createButton(keyPad[i], keyPad[i], Color.BLACK, Color.BLUE, controlObj);
 				tempButton.addActionListener(controlObj);
 				keypadPanel.add(tempButton);
 			}
@@ -367,23 +370,159 @@ public class CalculatorViewController extends JPanel {
 	private class Controller implements ActionListener {
 		/* Object of Calculator Model Class */
 		CalculatorModel modelObj;
-		/* Initiaal stage is set to false for errors*/
-		Boolean error = false;
-		@Override
-		public void actionPerformed(ActionEvent e) {
-			String digitRegex = "//d+";
-			if(e.getActionCommand().matches(digitRegex)) {
-				if(modelObj.getError() != true) {
-					
-				}
-			}
-			/*
-			 * Whenever any button is clicked its text will be displayed on display2 using
-			 * this function
-			 */
-			//display2.setText(e.getActionCommand());
+		/* to check if the backspace key is on or off */
+		Boolean backspaceOnFlag = false;
+		/* Initiaal stage is set to false for errors */
+		Boolean errorFlag = false;
+		/* used to decide if the application is in overlap state or not */
+		Boolean overlapFlag = false;
 
+		/**
+		 * Default constructor for the class.Setting the calculator model object to
+		 * modelObj
+		 * 
+		 * @param cm - CalculatorModel instance
+		 */
+		public Controller(CalculatorModel cm) {
+			modelObj = cm;
 		}
 
-	}
-}
+		/**
+		 * Reverts back to base view according to user selection of the mode i.e Int or
+		 * Float
+		 */
+		public void baseView() {
+			if (modelObj.integerMode()) {
+				display1.setText(" ");
+				display2.setText("0");
+			} else {
+				display1.setText(" ");
+				display2.setText("0.0");
+			}
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			/* Regex to match digits [0-9] */
+			 String digitRegex = "^\\d+$";
+			/* If user clicked on number then numbers are displayed on the textfield */
+			 if (e.getActionCommand().matches(digitRegex)) {
+				if (modelObj.getError() != true) {
+					/*
+					 * Checking if the user input is greater than the actual display fields if yes
+					 * then setting the text to empty string and clearing the display
+					 */
+					if (display1.getColumns() < display1.getText().length()
+							&& display2.getColumns() < display2.getText().length()) {
+						display2.setText("");
+						modelObj.clearFields();
+					} else {
+						if (modelObj.getCurrentState() == CalculatorModel.FIRSTOPERAND) {
+							if (overlapFlag == true) {
+								overlapFlag = false;
+								display2.setText(e.getActionCommand());
+							} else
+								display2.setText(display2.getText().concat(e.getActionCommand()));
+						}
+
+						else if (modelObj.getCurrentState() == CalculatorModel.SECONDOPERAND) {
+							if (overlapFlag == true) {
+								overlapFlag = false;
+								display2.setText(e.getActionCommand());
+							} else
+								display2.setText(display2.getText().concat(e.getActionCommand()));
+						}
+
+						else if (modelObj.getCurrentState() == CalculatorModel.FINALVAL) {
+							display1.setText("");
+							display2.setText(e.getActionCommand());
+						} else {
+							/* If none of the conditions are satisfied than set the error true */
+							modelObj.setError(true);
+						}
+					} /* else ends */
+					/*
+					 * After completing the above case we are checking if any errors then set
+					 * errorFlag to true
+					 */
+					if (modelObj.getError() == true)
+						errorFlag = true;
+				} /* modelObj error check ends here */
+
+				/* Setting backspace flag ON here */
+				backspaceOnFlag = true;
+
+			} /* Regex match ends here */
+			else if (e.getActionCommand() == "+" || e.getActionCommand() == "-" || e.getActionCommand() == "/"
+					|| e.getActionCommand() == "*") {
+				if (modelObj.getError() != true) {
+					if (modelObj.getCurrentState() == CalculatorModel.FIRSTOPERAND) {
+						overlapFlag = true;
+						modelObj.setFirstOperand(display2.getText());
+						modelObj.setArithmeticOperation(e.getActionCommand());
+						display1.setText(display2.getText().concat(e.getActionCommand()));
+					} else if (modelObj.getCurrentState() == CalculatorModel.SECONDOPERAND) {
+						if (overlapFlag == true) {
+							modelObj.setArithmeticOperation(e.getActionCommand());
+							display1.setText(display2.getText().concat(e.getActionCommand()));
+						}
+					} else if (modelObj.getCurrentState() == CalculatorModel.FINALVAL) {
+						overlapFlag = true;
+						modelObj.setArithmeticOperation(e.getActionCommand());
+						display1.setText(display2.getText().concat(e.getActionCommand()));
+						display2.getText();
+					} else
+						/* If none of the conditions are satisfied than set the error true */
+						modelObj.setError(true);
+					/*
+					 * After completing the above case we are checking if any errors then set
+					 * errorFlag to true
+					 */
+					if (modelObj.getError() == true)
+						errorFlag = true;
+				} /* modelObj error check ends here */
+
+				/* Setting backspace flag ON here */
+				backspaceOnFlag = true;
+
+			} /* Else if for [+*-/] ends here */
+			else if (e.getActionCommand() == "=") {
+				if (modelObj.getError() != true) {
+					if (modelObj.getCurrentState() == CalculatorModel.SECONDOPERAND) {
+						String temp = modelObj.getOperationResult();
+						modelObj.setSecondOperand(display2.getText());
+						/* Setting error if returned string is null */
+						if (temp == null) {
+							modelObj.setError(true);
+						}
+						/* If not empty then clearing display1 and displaying the result in display2 */
+						else {
+							display1.setText("");
+							display2.setText(temp);
+						}
+					} else if (modelObj.getCurrentState() == CalculatorModel.FINALVAL) {
+						String temp = modelObj.getOperationResult();
+						display2.setText(temp);
+					} else
+						/* If none of the conditions are satisfied than set the error true */
+						modelObj.setError(true);
+				}
+				if (modelObj.getError() == true)
+					errorFlag = true;
+
+				/* Setting backspace flag ON here */
+				backspaceOnFlag = true;
+
+			} /* '=' action elseif ends */
+			else if (e.getActionCommand() == "C") {
+				if (modelObj.getError() != true) {
+					baseView();
+					modelObj.clearFields();
+				}
+			}
+		}/*
+			 * 'C' elseif ends }/* Action Performed Method ends
+			 */
+
+	}/* Controller Class ends */
+}/* CalculatorViewController ends */
