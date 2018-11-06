@@ -273,7 +273,7 @@ public class CalculatorViewController extends JPanel {
 			 */
 			if (keyPad[i] == ".") {
 				dotButton = createButton(keyPad[i], keyPad[i], Color.BLACK, Color.BLUE, controlObj);
-				dotButton.addActionListener(controlObj);
+				//dotButton.addActionListener(controlObj);
 				keypadPanel.add(dotButton);
 
 			}
@@ -283,7 +283,7 @@ public class CalculatorViewController extends JPanel {
 			 */
 			else if (keyPad[i] == "/" || keyPad[i] == "*" || keyPad[i] == "-" || keyPad[i] == "+") {
 				tempButton = createButton(keyPad[i], keyPad[i], Color.BLACK, Color.CYAN, controlObj);
-				tempButton.addActionListener(controlObj);
+				//tempButton.addActionListener(controlObj);
 				keypadPanel.add(tempButton);
 			}
 			/*
@@ -292,14 +292,14 @@ public class CalculatorViewController extends JPanel {
 			 */
 			else if (keyPad[i] == "\u00B1") {
 				tempButton = createButton(keyPad[i], keyPad[i], Color.BLACK, Color.PINK, controlObj);
-				tempButton.addActionListener(controlObj);
+				//tempButton.addActionListener(controlObj);
 				keypadPanel.add(tempButton);
 
 			}
 			/* Else when it is a number button (1,2,3...etc) */
 			else {
 				tempButton = createButton(keyPad[i], keyPad[i], Color.BLACK, Color.BLUE, controlObj);
-				tempButton.addActionListener(controlObj);
+				//tempButton.addActionListener(controlObj);
 				keypadPanel.add(tempButton);
 			}
 		}
@@ -375,8 +375,9 @@ public class CalculatorViewController extends JPanel {
 		/* Initiaal stage is set to false for errors */
 		Boolean errorFlag = false;
 		/* used to decide if the application is in overlap state or not */
-		Boolean overlapFlag = false;
-
+		Boolean overlapFlag = true;
+		/* used for floating point mode*/
+		Boolean pointFlag = false;
 		/**
 		 * Default constructor for the class.Setting the calculator model object to
 		 * modelObj
@@ -405,6 +406,8 @@ public class CalculatorViewController extends JPanel {
 		public void actionPerformed(ActionEvent e) {
 			/* Regex to match digits [0-9] */
 			 String digitRegex = "^\\d+$";
+			 /* Stores no of columns in the display1 and 2*/
+			 int col = 16;
 			/* If user clicked on number then numbers are displayed on the textfield */
 			 if (e.getActionCommand().matches(digitRegex)) {
 				if (modelObj.getError() != true) {
@@ -412,8 +415,8 @@ public class CalculatorViewController extends JPanel {
 					 * Checking if the user input is greater than the actual display fields if yes
 					 * then setting the text to empty string and clearing the display
 					 */
-					if (display1.getColumns() < display1.getText().length()
-							&& display2.getColumns() < display2.getText().length()) {
+					if (col < display1.getText().length()
+							&& col < display2.getText().length()) {
 						display2.setText("");
 						modelObj.clearFields();
 					} else {
@@ -453,6 +456,8 @@ public class CalculatorViewController extends JPanel {
 				backspaceOnFlag = true;
 
 			} /* Regex match ends here */
+			 
+			 /* When [+/-*] is clicked*/
 			else if (e.getActionCommand() == "+" || e.getActionCommand() == "-" || e.getActionCommand() == "/"
 					|| e.getActionCommand() == "*") {
 				if (modelObj.getError() != true) {
@@ -486,11 +491,15 @@ public class CalculatorViewController extends JPanel {
 				backspaceOnFlag = true;
 
 			} /* Else if for [+*-/] ends here */
+			 
+			 /* When = is clicked*/
 			else if (e.getActionCommand() == "=") {
 				if (modelObj.getError() != true) {
 					if (modelObj.getCurrentState() == CalculatorModel.SECONDOPERAND) {
-						String temp = modelObj.getOperationResult();
+						/* Setting the value of second operand in secondOperand*/
 						modelObj.setSecondOperand(display2.getText());
+						/* Returns calculated result into temp*/
+						String temp = modelObj.getOperationResult();
 						/* Setting error if returned string is null */
 						if (temp == null) {
 							modelObj.setError(true);
@@ -514,15 +523,139 @@ public class CalculatorViewController extends JPanel {
 				backspaceOnFlag = true;
 
 			} /* '=' action elseif ends */
+			 
+			 /* When C is clicked*/
 			else if (e.getActionCommand() == "C") {
-				if (modelObj.getError() != true) {
-					baseView();
-					modelObj.clearFields();
+				if (modelObj.getError()) {
+					labelChange(!modelObj.integerMode());
 				}
-			}
-		}/*
-			 * 'C' elseif ends }/* Action Performed Method ends
-			 */
+				errorFlag = false;
+				baseView();
+				modelObj.clearFields();
+				overlapFlag = true;
+				pointFlag = false;
+			}/* else if case for "C" ends */
+			 
+			 /* When . is clicked*/
+			else if (e.getActionCommand() == ".") {
+				if (modelObj.getError() != true) {
+					if(pointFlag != true) {
+						if(overlapFlag == true) {
+							display2.setText(".");
+							overlapFlag = false;
+						}
+						else {
+							display2.setText(display2.getText().concat("."));
+						}
+						pointFlag = true;
+						}
+					}
+			}/* Else if case for '.' ends*/
+			 
+			 /* When .0 is clicked*/
+			else if(e.getActionCommand() == ".0") {
+				modelObj.setFLoatingPrecision(CalculatorModel.SINGLEPRECISION);
+				modelObj.setOperationMode(CalculatorModel.FLOAT);
+				if (modelObj.getError() != true) {
+					labelChange(true);
+					baseView();
+				}
+			}/* Else if case for ".0" ends */
+			
+			 /* When .00 is clicked*/
+			else if(e.getActionCommand() == ".00") {
+				modelObj.setFLoatingPrecision(CalculatorModel.DOUBLEPRECISION);
+				modelObj.setOperationMode(CalculatorModel.FLOAT);
+				if (modelObj.getError() != true) {
+					labelChange(true);
+					baseView();
+				}
+			}/* Else if case for ".00" ends */
+			 
+			 /* When Sci is clicked*/
+			else if(e.getActionCommand() == "Sci") {
+				modelObj.setFLoatingPrecision(CalculatorModel.SCICALCULATION);
+				modelObj.setOperationMode(CalculatorModel.FLOAT);
+				if (modelObj.getError() != true) {
+					labelChange(true);
+					baseView();
+				}
+			}/* Else if case for "Sci" ends */
+			 
+			 /* When Int is clicked*/
+			else if(e.getActionCommand() == "Int") {
+				modelObj.setOperationMode(CalculatorModel.INT);
+				if (modelObj.getError() != true) {
+					labelChange(false);
+					modelObj.clearFields();
+					baseView();
+				}
+			}/* Else if case for "Int" ends */
+			 
+			 /* When +- is clicked*/
+			else if(e.getActionCommand() == "\u00B1") {
+				if (modelObj.getError() != true) {
+					/* If the number starts with - then it will remove the - sign from the front*/
+					if(display2.getText().startsWith("-")) {
+						display2.setText(display2.getText().substring(1));
+					}
+					/* If the number is positive then it will add the - sign in the front of the number*/
+					else {
+						display2.setText("-".concat(display2.getText()));
+					}
+				}
+			}/* Else if for "\u00B1 ends i.e +- sign*/
+			 
+			else if(e.getActionCommand() == "\u21B2") {
+				if(!backspaceOnFlag) return;
+				if(modelObj.getError() != true) {
+					if(overlapFlag != true) {
+						if(display2.getText().length() >= 1) {
+							display2.setText(display2.getText().substring(0,display2.getText().length() - 1 ));
+							if(display2.getText().contains("-") && display2.getText().length() == 1) {
+								baseView();
+								modelObj.clearFields();
+								overlapFlag = true;
+								pointFlag = false;
+							}
+						}
+						else {
+							baseView();
+							modelObj.clearFields();
+							overlapFlag = true;
+							pointFlag = false;
+						}
+					}
+				}
+				if(modelObj.getError()) {
+					errorFlag = true;
+				}
+			}/* Else if for "\u212B2" ends here */ 
+			 if(errorFlag) {
+				 error.setBackground(Color.RED);
+				 error.setText("E");
+				 display2.setText(modelObj.getErrMsg());
+				 modelObj.cleanErrMsg();
+			 }
+		}/*Action Performed ends here*/
 
+
+	public void labelChange(Boolean on) {
+		/* When Floating point is selected*/
+		if(on) {
+			dotButton.setBackground(Color.BLUE);
+			dotButton.setEnabled(on);
+			error.setText("F");
+			error.setBackground(Color.YELLOW);
+		}
+		/* When int mode is selected */
+		else {
+			dotButton.setBackground(new Color(178,156,250));
+			dotButton.setEnabled(on);
+			error.setText("I");
+			error.setBackground(Color.GREEN);
+		}
+	}
 	}/* Controller Class ends */
+	
 }/* CalculatorViewController ends */
