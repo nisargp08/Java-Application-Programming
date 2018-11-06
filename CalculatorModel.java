@@ -28,6 +28,20 @@ public class CalculatorModel {
 	public static final int DOUBLEPRECISION = 6;
 	/** {@value} : constant value for Scientific calculations*/
 	public static final int SCICALCULATION = 7;
+	/** {@value}* : constant for integer mode*/
+	public static final int INT = 8;
+	/**
+	 *  Default constructor for the model class
+	 * @return 
+	 */
+	public CalculatorModel(){
+		firstOperand = null;
+		secondOperand = null;
+		operation = null;
+		errorState = false;
+		precisionMode = SINGLEPRECISION;
+		currentState = FIRSTOPERAND;
+	}
 	/** To clear the value in the text field display1
 	 */
 	public void clearFields(){
@@ -245,5 +259,18 @@ public class CalculatorModel {
 		return null;
 		
 	}/* Calculate ends*/
-	
+	/**
+	 * returns currentState variable
+	 * @return currentState : int
+	 */
+	public int getCurrentState() {
+		return currentState;
+	}
+	/**
+	 * returns mode as INT
+	 * @return mode : boolean
+	 */
+	public boolean integerMode() {
+		return mode == INT;
+	}
 }/* Class ends*/
